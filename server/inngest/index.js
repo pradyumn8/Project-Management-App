@@ -55,7 +55,32 @@ const synUserDeletion = inngest.createFunction(
     }
 )
           
+// Inngest Function to save workspace data to a database
+const syncSpaceCreation = inngest.createFunction(
+    {id: 'sync-workspace-from-clerk'},
+    {event: 'clerk/organization.created'},
+    async ({event})=>{
+        const {data}=event;
+        await prisma.workspace.create({
+            data: {
+                id:data.id,
+                name:data.name,
+                slug:data.slug,
+                ownerId:data.created_by,
+                image_url: data.image_url,
+            }
+        })
 
+        // Add creater as Admin member
+        await prisma.workspace({
+            data:{
+                user: data.created_by,
+                workspaceId: data.id,
+                role:"ADMIN"
+            }
+        })
+    }
+)
 
 // Create an empty array where we'll export future Inngest functions
 export const functions = [
