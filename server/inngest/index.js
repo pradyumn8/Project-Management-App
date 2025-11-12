@@ -72,9 +72,9 @@ const syncWorkspaceCreation = inngest.createFunction(
         })
 
         // Add creater as Admin member
-        await prisma.workspace({
+        await prisma.workspaceMember.create({
             data:{
-                user: data.created_by,
+                userId: data.created_by,
                 workspaceId: data.id,
                 role:"ADMIN"
             }
@@ -86,7 +86,7 @@ const syncWorkspaceCreation = inngest.createFunction(
 //Inngest Function to update workspace data in database
 const syncWorkspaceUpdation = inngest.createFunction(
     {id: 'update-workspace-from-clerk'},
-    {event:'clerk/organication.updated'},
+    {event:'clerk/organization.updated'},
     async({event})=>{
         const {data}=event;
         await prisma.workspace.update({
