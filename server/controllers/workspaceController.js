@@ -42,7 +42,7 @@ export const addMember = async (req, res) => {
         const { email, role, workspaceId, message } = req.body;
 
         // Check if user exists
-        const user = await prisma.user.findUnique({ where: { email } })
+        const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" })
