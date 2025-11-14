@@ -227,5 +227,6 @@ export const functions = [
     syncWorkspaceDeletion,
     syncWorkspaceMemberCreation,
     syncWorkspaceUpdation,
-    syncWorkspaceCreation
+    syncWorkspaceCreation,
+    sendTaskAssignmentEmail
 ];
