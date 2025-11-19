@@ -60,7 +60,8 @@ const ProjectTasks = ({ tasks }) => {
     const handleStatusChange = async (taskId, newStatus) => {
         try {
             toast.loading("Updating status...");
-
+            const token = await getToken()
+            
             //  Simulate API call
             // await new Promise((resolve) => setTimeout(resolve, 2000));
             await api.put(`/api/tasks/${taskId}`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } })
