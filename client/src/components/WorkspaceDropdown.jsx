@@ -8,9 +8,9 @@ import { useClerk, useOrganizationList } from "@clerk/clerk-react";
 
 function WorkspaceDropdown() {
 
-    const {setActive, userMemberships, isLoaded} = useOrganizationList({userMemberships:true})
+    const { setActive, userMemberships, isLoaded } = useOrganizationList({ userMemberships: true })
 
-    const {openCreateOrganization}= useClerk()
+    const { openCreateOrganization } = useClerk()
 
     const { workspaces } = useSelector((state) => state.workspace);
     const currentWorkspace = useSelector((state) => state.workspace?.currentWorkspace || null);
@@ -21,7 +21,7 @@ function WorkspaceDropdown() {
     const navigate = useNavigate();
 
     const onSelectWorkspace = (organizationId) => {
-        setActive({organization: organizationId})
+        setActive({ organization: organizationId })
         dispatch(setCurrentWorkspace(organizationId))
         setIsOpen(false);
         navigate('/')
@@ -38,11 +38,11 @@ function WorkspaceDropdown() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    useEffect(()=>{
-        if(currentWorkspace && isLoaded){
-            setActive({organization:currentWorkspace.id})
+    useEffect(() => {
+        if (currentWorkspace && isLoaded) {
+            setActive({ organization: currentWorkspace.id })
         }
-    },[currentWorkspace,isLoaded])
+    }, [currentWorkspace, isLoaded])
 
     return (
         <div className="relative m-4" ref={dropdownRef}>
@@ -60,26 +60,29 @@ function WorkspaceDropdown() {
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500 dark:text-zinc-400 shrink-0" />
             </button>
-
             {isOpen && (
                 <div className="absolute z-50 w-64 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded shadow-lg top-full left-0">
                     <div className="p-2">
                         <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-2 px-2">
                             Workspaces
                         </p>
-                        {/* {dummyWorkspaces.map((ws) => ( */}
-                        {userMemberships.data.map(({organization}) => (
-                            <div key={organization.id} onClick={() => onSelectWorkspace(organization.id)} className="flex items-center gap-3 p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-zinc-800" >
-                                <img src={organization.imageUrl} alt={organization.name} className="w-6 h-6 rounded" />
+
+                        {workspaces.map((ws) => (
+                            <div
+                                key={ws.id}
+                                onClick={() => onSelectWorkspace(ws.id)}
+                                className="flex items-center gap-3 p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
+                            >
+                                <img src={ws.image_url} alt={ws.name} className="w-6 h-6 rounded" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
-                                        {organization.name}
+                                        {ws.name}
                                     </p>
                                     <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">
-                                        {organization.membersCount || 0} members
+                                        {(ws.membersCount || 0)} members
                                     </p>
                                 </div>
-                                {currentWorkspace?.id === organization.id && (
+                                {currentWorkspace?.id === ws.id && (
                                     <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                                 )}
                             </div>
@@ -88,7 +91,7 @@ function WorkspaceDropdown() {
 
                     <hr className="border-gray-200 dark:border-zinc-700" />
 
-                    <div onClick={()=> {openCreateOrganization(); setIsOpen(false)}} className="p-2 cursor-pointer rounded group hover:bg-gray-100 dark:hover:bg-zinc-800" >
+                    <div onClick={() => { openCreateOrganization(); setIsOpen(false) }} className="p-2 cursor-pointer rounded group hover:bg-gray-100 dark:hover:bg-zinc-800" >
                         <p className="flex items-center text-xs gap-2 my-1 w-full text-blue-600 dark:text-blue-400 group-hover:text-blue-500 dark:group-hover:text-blue-300">
                             <Plus className="w-4 h-4" /> Create Workspace
                         </p>
