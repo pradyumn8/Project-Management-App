@@ -101,122 +101,92 @@ export const createProject = async (req, res) => {
 
 // Update project
 export const updateProject = async (req, res) => {
-    try {
-        const { userId } = await req.auth();
-        const { id } = req.params;
-        const { workspaceId, description, name, status, start_date, end_date, progress, priority } = req.body;
+  try {
+    const { userId } = await req.auth();
+    const { projectId } = req.params; 
+    const {
+      workspaceId,
+      description,
+      name,
+      status,
+      start_date,
+      end_date,
+      progress,
+      priority,
+    } = req.body;
 
-        // check if user has admin role for workspace
-        const workspace = await prisma.workspace.findUnique({
-            where: { id: workspaceId },
-            include: { members: { include: { user: true } } }
-        })
-
-        if (!workspace) {
-            return res.status(404).json({ message: 'Workspace not found' });
-        }
-        if (!workspace.members.some((member) => member.userId === userId && member.role === "ADMIN")) {
-            const project = await prisma.user.findUnique({
-                where: { id }
-            })
-            if (!project) {
-                return res.status(404).json({ message: "Project not found" });
-            } else if (project.team_lead !== userId) {
-                return res.status(403).json({ message: "You don't have permission to update projects in this workspace" });
-            }
-        }
-        const project = await prisma.project.update({
-            where: { id },
-            data: {
-                workspaceId,
-                description,
-                name,
-                status,
-                priority,
-                progress, start_date: start_date ? new Date(start_date) : null,
-                end_date: end_date ? new Date(end_date) : null,
-            }
-        })
-        res.json({ project, message: "Project updated successfully" })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: error.code || error.message })
-
+    if (!projectId) {
+      return res.status(400).json({ message: "Project id is required" });
     }
-}
-// Update project
-// export const updateProject = async (req, res) => {
-//   try {
-//     const { userId } = await req.auth();
-//     const { id } = req.params;
 
-//     if (!id) {
-//       return res.status(400).json({ message: "Project id is required" });
-//     }
+    // 1) Fetch project with its workspace + members
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        workspace: {
+          include: {
+            members: true,
+          },
+        },
+      },
+    });
 
-//     const {
-//       workspaceId,
-//       description,
-//       name,
-//       status,
-//       start_date,
-//       end_date,
-//       progress,
-//       priority,
-//     } = req.body;
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
-//     // 1) Check workspace + admin role
-//     const workspace = await prisma.workspace.findUnique({
-//       where: { id: workspaceId },
-//       include: { members: true }, // no need for user include since we use member.userId
-//     });
+    const workspace = project.workspace;
 
-//     if (!workspace) {
-//       return res.status(404).json({ message: "Workspace not found" });
-//     }
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace not found for this project" });
+    }
 
-//     const isAdmin = workspace.members.some(
-//       (member) => member.userId === userId && member.role === "ADMIN"
-//     );
+    // 2) Permission check
+    const isAdmin = workspace.members.some(
+      (member) => member.userId === userId && member.role === "ADMIN"
+    );
+    const isTeamLead = project.team_lead === userId;
 
-//     // 2) If not admin, check if user is project team_lead
-//     if (!isAdmin) {
-//       const project = await prisma.project.findUnique({
-//         where: { id },
-//       });
+    if (!isAdmin && !isTeamLead) {
+      return res
+        .status(403)
+        .json({ message: "You don't have permission to update this project" });
+    }
 
-//       if (!project) {
-//         return res.status(404).json({ message: "Project not found" });
-//       }
+    // 3) Prepare update payload
+    const updateData = {
+      description,
+      name,
+      status,
+      priority,
+      progress,
+      start_date: start_date ? new Date(start_date) : null,
+      end_date: end_date ? new Date(end_date) : null,
+    };
 
-//       if (project.team_lead !== userId) {
-//         return res.status(403).json({
-//           message: "You don't have permission to update projects in this workspace",
-//         });
-//       }
-//     }
+    // only allow workspace change if workspaceId is provided
+    if (workspaceId) {
+      updateData.workspaceId = workspaceId;
+    }
 
-//     // 3) Update project
-//     const project = await prisma.project.update({
-//       where: { id },
-//       data: {
-//         workspaceId,
-//         description,
-//         name,
-//         status,
-//         priority,
-//         progress,
-//         start_date: start_date ? new Date(start_date) : null,
-//         end_date: end_date ? new Date(end_date) : null,
-//       },
-//     });
+    // 4) Update project
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: updateData,
+    });
 
-//     return res.json({ project, message: "Project updated successfully" });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(500).json({ message: error.code || error.message });
-//   }
-// };
+    return res.json({
+      project: updatedProject,
+      message: "Project updated successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: error.code || error.message || "Internal server error" });
+  }
+};
+
 
 // add member project
 export const addMember = async (req, res) => {
